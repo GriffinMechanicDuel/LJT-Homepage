@@ -1,0 +1,31 @@
+name: Diagnose Pages enablement
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+
+jobs:
+  diagnose:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check current Pages site
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          echo "=== GET pages site ==="
+          curl -sS -w "\nHTTP_STATUS:%{http_code}\n" \
+            -H "Authorization: Bearer $GH_TOKEN" \
+            -H "Accept: application/vnd.github+json" \
+            -H "X-GitHub-Api-Version: 2022-11-28" \
+            "$GITHUB_API_URL/repos/$GITHUB_REPOSITORY/pages" || true
+          echo "=== Try creating pages site (workflow build type) ==="
+          curl -sS -w "\nHTTP_STATUS:%{http_code}\n" \
+            -X POST \
+            -H "Authorization: Bearer $GH_TOKEN" \
+            -H "Accept: application/vnd.github+json" \
+            -H "X-GitHub-Api-Version: 2022-11-28" \
+            -d '{"build_type":"workflow"}' \
+            "$GITHUB_API_URL/repos/$GITHUB_REPOSITORY/pages" || true
