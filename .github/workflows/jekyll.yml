@@ -14,7 +14,6 @@ permissions:
   contents: read
   pages: write
   id-token: write
-  administration: write
 
 # Allow only one concurrent deployment, skipping runs queued between the run in-progress and latest queued.
 # However, do NOT cancel in-progress runs as we want to allow these production deployments to complete.
@@ -49,9 +48,20 @@ jobs:
         uses: actions/configure-pages@v6.0.0
         with:
           enablement: true
+        continue-on-error: true
+      - name: Set base path
+        if: steps.pages.outputs.base_path == ''
+        run: echo "base_path=/LJT-Homepage" >> "$GITHUB_OUTPUT"
+        id: basepath
       - name: Build with Jekyll
         # Outputs to the './_site' directory by default
-        run: bundle exec jekyll build --baseurl "${{ steps.pages.outputs.base_path }}"
+        run: |
+          if [ -n "${{ steps.pages.outputs.base_path }}" ]; then
+            BASE="${{ steps.pages.outputs.base_path }}"
+          else
+            BASE="${{ steps.basepath.outputs.base_path }}"
+          fi
+          bundle exec jekyll build --baseurl "$BASE"
         env:
           JEKYLL_ENV: production
       - name: Upload GitHub Pages artifact
